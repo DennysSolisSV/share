@@ -2,15 +2,22 @@ import React, { useState } from 'react';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
-import { MdDownloadForOfline } from 'react-icons/md';
+import { MdDownloadForOffline } from 'react-icons/md';
 import { AiTwooneDelete } from 'react-icons/ai';
 import { BsFillArrowUpRi} from 'react-icons/bs';
 
 import { client, urlFor } from '../client';
+import { fetchUser } from '../utils/fetchUser';
 
-const Pin = ({ pin: {postedBy, image, _id, destination }}) => {
+const Pin = ({ pin: {postedBy, image, _id, destination, save }}) => {
   const [ postHovered, setPostHovered ] = useState(false);
   const [ savingPost, setSavingPost ] = useState(false);
+
+  const user = fetchUser();
+
+  let alreadySaved = (save?.filter((item) => item.postedBy._id === user.googleId));
+  
+  alreadySaved = alreadySaved?.length > 0 ? alreadySaved : [];
 
   const navigate = useNavigate();
   return (
@@ -29,8 +36,24 @@ const Pin = ({ pin: {postedBy, image, _id, destination }}) => {
           >
             <div className='flex items-center justify-between'>
               <div className='flex gap-2'>
-
+                <a
+                  href={`${image?.asset?.url}?dl=`}
+                  download
+                  onClick={(e) => e.stopPropagation()}
+                  className='bg-white w-9 h-9 rounded-full flex items-center justify-center text-dark text-xl opacity-75 hover:opacity-100 hover:shadows-md outline-none'
+                >
+                  <MdDownloadForOffline />
+                </a>
               </div>
+              { alreadySaved ? (
+                <button type='button' className='bg-red-500 opacity-70 hover:opacity-100 text-white font-bold px-5 py-1 text-base rounded-3xl hover:shadow-md outlined-none'>
+                  {save?.length} Saved
+                </button>
+              ): (
+                <button type='button' className='bg-red-500 opacity-70 hover:opacity-100 text-white font-bold px-5 py-1 text-base rounded-3xl hover:shadow-md outlined-none'>
+                  Save
+                </button>
+              )}
             </div>
           </div>
         )}
