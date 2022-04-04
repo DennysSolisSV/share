@@ -3,9 +3,8 @@ import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 import { MdDownloadForOffline } from 'react-icons/md';
-import { AiTwooneDelete } from 'react-icons/ai';
-import { BsFillArrowUpRi} from 'react-icons/bs';
-
+import { BsFillArrowUpRightCircleFill } from 'react-icons/bs';
+import { AiTwotoneDelete } from 'react-icons/ai';
 import { client, urlFor } from '../client';
 import { fetchUser } from '../utils/fetchUser';
 
@@ -14,12 +13,47 @@ const Pin = ({ pin: {postedBy, image, _id, destination, save }}) => {
   const [ savingPost, setSavingPost ] = useState(false);
 
   const user = fetchUser();
+  const navigate = useNavigate();
 
-  let alreadySaved = (save?.filter((item) => item.postedBy._id === user.googleId));
-  
+  const deletePin = (id) => {
+    client
+      .delete(id)
+      .then(() => {
+        window.location.reload();
+      });
+  };
+
+
+  let alreadySaved = save?.filter((item) => item?.postedBy?._id === user?.googleId);
+
   alreadySaved = alreadySaved?.length > 0 ? alreadySaved : [];
 
-  const navigate = useNavigate();
+  
+
+  const savePin = (id) => {
+    if (alreadySaved?.length === 0) {
+      setSavingPost(true);
+
+      client
+        .patch(id)
+        .setIfMissing({ save: [] })
+        .insert('after', 'save[-1]', [{
+          _key: uuidv4(),
+          userId: user?.googleId,
+          postedBy: {
+            _type: 'postedBy',
+            _ref: user?.googleId,
+          },
+        }])
+        .commit()
+        .then(() => {
+          window.location.reload();
+          setSavingPost(false);
+        });
+    }
+  };
+
+
   return (
     <div className='m-2'>
       <div 
@@ -45,13 +79,45 @@ const Pin = ({ pin: {postedBy, image, _id, destination, save }}) => {
                   <MdDownloadForOffline />
                 </a>
               </div>
-              { alreadySaved ? (
-                <button type='button' className='bg-red-500 opacity-70 hover:opacity-100 text-white font-bold px-5 py-1 text-base rounded-3xl hover:shadow-md outlined-none'>
-                  {save?.length} Saved
+              {alreadySaved?.length !== 0 ? (
+                <button type="button" className="bg-red-500 opacity-70 hover:opacity-100 text-white font-bold px-5 py-1 text-base rounded-3xl hover:shadow-md outline-none">
+                  {save?.length}  Saved
                 </button>
-              ): (
-                <button type='button' className='bg-red-500 opacity-70 hover:opacity-100 text-white font-bold px-5 py-1 text-base rounded-3xl hover:shadow-md outlined-none'>
-                  Save
+              ) : (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    savePin(_id);
+                  }}
+                  type="button"
+                  className="bg-red-500 opacity-70 hover:opacity-100 text-white font-bold px-5 py-1 text-base rounded-3xl hover:shadow-md outline-none"
+                >
+                  {save?.length}   {savingPost ? 'Saving' : 'Save'}
+                </button>
+              )}
+            </div>
+            <div className='flex justify-between items-center gap-2 w-full'>
+              { destination && (
+                <a
+                  href={destination}
+                  target='_blank'
+                  rel='noreferrer'
+                  className='bg-white flex items-center gap-2 text-black font-bold p-2 pl-4 pr-4 rounded-full opacity-70 hover:100 hover:shadow-md'
+                >
+                  <BsFillArrowUpRightCircleFill />
+                  {destination.length > 20 ? destination.slice(8,20) : destination.slice(8)}
+                </a>
+              )}
+              {postedBy?._id === user.googleId && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deletePin(_id);
+                  }}
+                  className="bg-white p-2 rounded-full w-8 h-8 flex items-center justify-center text-dark opacity-75 hover:opacity-100 outline-none"
+                >
+                  <AiTwotoneDelete />
                 </button>
               )}
             </div>
@@ -60,7 +126,7 @@ const Pin = ({ pin: {postedBy, image, _id, destination, save }}) => {
      </div>
     </div>
     
-  )
+  ) 
 }
 
 export default Pin
