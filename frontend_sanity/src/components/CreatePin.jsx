@@ -26,6 +26,7 @@ const CreatePin = ({ user }) => {
       selectedFile.type === 'image/png' || 
       selectedFile.type === 'image/svg' ||
       selectedFile.type === 'image/jpg' ||
+      selectedFile.type === 'image/jpeg' ||
       selectedFile.type === 'image/gif' ||
       selectedFile.type === 'image/tiff'
     ){
